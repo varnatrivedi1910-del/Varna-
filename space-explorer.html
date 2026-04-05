@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌌 Space Explorer — Stars & Galaxies</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --blue:#00f5ff; --purple:#bf00ff; --pink:#ff0090;
+  --gold:#ffd700; --green:#39ff14; --bg:#00000a;
+  --card:rgba(0,10,40,0.9);
+}
+body { font-family:'Exo 2',sans-serif; background:var(--bg); color:#ddeeff; min-height:100vh; overflow-x:hidden; }
+
+#starfield { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; overflow:hidden; }
+.star { position:absolute; border-radius:50%; animation:twinkle var(--d) ease-in-out infinite alternate; }
+@keyframes twinkle { 0%{opacity:0.1;transform:scale(0.8)} 100%{opacity:1;transform:scale(1.3)} }
+
+.nebula { position:fixed; border-radius:50%; filter:blur(90px); opacity:0.12; pointer-events:none; z-index:0; animation:nd 18s ease-in-out infinite alternate; }
+@keyframes nd { 0%{transform:translate(0,0)} 100%{transform:translate(35px,25px)} }
+
+header { position:relative; z-index:10; text-align:center; padding:28px 20px 14px; background:linear-gradient(180deg,rgba(0,0,20,0.98),transparent); border-bottom:1px solid #00f5ff22; }
+header h1 { font-family:'Orbitron',monospace; font-size:clamp(1.6rem,5vw,3rem); font-weight:900; background:linear-gradient(90deg,#00f5ff,#bf00ff,#ff0090,#ffd700,#00f5ff); background-size:300%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:sh 4s linear infinite; letter-spacing:4px; }
+@keyframes sh { 0%{background-position:0%} 100%{background-position:300%} }
+header p { color:#5577aa; font-size:0.8rem; letter-spacing:5px; text-transform:uppercase; margin-top:6px; }
+
+nav { position:relative; z-index:10; display:flex; justify-content:center; gap:8px; padding:14px 20px; flex-wrap:wrap; }
+.tab { font-family:'Orbitron',monospace; font-size:0.65rem; letter-spacing:2px; text-transform:uppercase; padding:10px 20px; border:1px solid #00f5ff33; background:rgba(0,15,50,0.7); color:#5577aa; cursor:pointer; border-radius:3px; clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%); transition:all 0.3s; }
+.tab:hover,.tab.active { background:rgba(0,245,255,0.12); border-color:var(--blue); color:var(--blue); box-shadow:0 0 15px #00f5ff55; }
+
+main { position:relative; z-index:10; max-width:1200px; margin:0 auto; padding:20px; }
+.panel { display:none; animation:fi 0.4s ease; }
+.panel.active { display:block; }
+@keyframes fi { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+.sec-title { font-family:'Orbitron',monospace; font-size:1rem; color:var(--blue); letter-spacing:3px; text-transform:uppercase; margin-bottom:22px; padding-bottom:10px; border-bottom:1px solid #00f5ff22; display:flex; align-items:center; gap:10px; }
+.sec-title::before { content:''; width:4px; height:22px; background:linear-gradient(180deg,#00f5ff,#bf00ff); border-radius:2px; box-shadow:0 0 10px #00f5ff88; }
+
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; }
+.card { background:var(--card); border:1px solid #00f5ff1a; border-radius:14px; padding:22px; cursor:pointer; position:relative; overflow:hidden; transition:all 0.3s; }
+.card::after { content:''; position:absolute; top:0; left:0; width:100%; height:2px; background:linear-gradient(90deg,transparent,var(--ac,#00f5ff),transparent); }
+.card:hover { border-color:var(--ac,#00f5ff); transform:translateY(-5px); box-shadow:0 10px 35px rgba(0,245,255,0.18); }
+.ci { font-size:2.5rem; margin-bottom:12px; display:block; }
+.cn { font-family:'Orbitron',monospace; font-size:0.95rem; color:var(--blue); margin-bottom:4px; font-weight:700; }
+.ct { font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:var(--ac,#5577aa); margin-bottom:12px; }
+.cd { font-size:0.83rem; color:#8899bb; line-height:1.65; margin-bottom:14px; }
+.stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.stat { background:rgba(0,245,255,0.04); border:1px solid #00f5ff1a; border-radius:6px; padding:8px 10px; }
+.sl { font-size:0.6rem; letter-spacing:2px; text-transform:uppercase; color:#445566; margin-bottom:3px; }
+.sv { font-family:'Orbitron',monospace; font-size:0.78rem; color:var(--gold); font-weight:700; }
+
+/* MAP */
+.map-controls { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+.map-btn { font-family:'Orbitron',monospace; font-size:0.62rem; letter-spacing:1px; padding:8px 16px; border:1px solid #00f5ff33; background:rgba(0,15,50,0.7); color:var(--blue); cursor:pointer; border-radius:4px; transition:all 0.3s; }
+.map-btn:hover,.map-btn.active { background:rgba(0,245,255,0.18); box-shadow:0 0 12px #00f5ff55; }
+.map-info { font-size:0.72rem; color:#5577aa; letter-spacing:1px; margin-left:auto; }
+canvas#mapcanvas { width:100%; height:460px; border:1px solid #00f5ff22; border-radius:12px; display:block; cursor:crosshair; }
+.mtt { position:fixed; background:rgba(0,8,35,0.97); border:1px solid var(--blue); border-radius:10px; padding:12px 16px; pointer-events:none; z-index:999; display:none; min-width:160px; box-shadow:0 0 20px #00f5ff44; }
+.mtt-n { font-family:'Orbitron',monospace; color:var(--blue); font-size:0.85rem; margin-bottom:5px; }
+.mtt-b { font-size:0.75rem; color:#8899bb; line-height:1.6; }
+
+/* CHAT */
+.chat-box { background:rgba(0,5,22,0.95); border:1px solid #00f5ff22; border-radius:14px; display:flex; flex-direction:column; height:530px; }
+.chat-head { padding:15px 20px; border-bottom:1px solid #00f5ff15; display:flex; align-items:center; gap:12px; }
+.ai-dot { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#00f5ff,#bf00ff); display:flex; align-items:center; justify-content:center; font-size:1.2rem; animation:pulse 2.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 10px #00f5ff88} 50%{box-shadow:0 0 28px #00f5ffbb} }
+.ai-title { font-family:'Orbitron',monospace; font-size:0.9rem; color:var(--blue); }
+.ai-sub { font-size:0.7rem; color:#5577aa; letter-spacing:2px; }
+.online { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); margin-left:auto; animation:blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.chat-msgs { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; scrollbar-width:thin; scrollbar-color:#00f5ff22 transparent; }
+.msg { max-width:82%; padding:12px 16px; border-radius:12px; font-size:0.87rem; line-height:1.65; animation:mi 0.3s ease; }
+@keyframes mi { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg.user { align-self:flex-end; background:linear-gradient(135deg,rgba(0,245,255,0.18),rgba(191,0,255,0.18)); border:1px solid #00f5ff33; border-bottom-right-radius:3px; }
+.msg.ai { align-self:flex-start; background:rgba(0,15,50,0.8); border:1px solid #00f5ff18; border-bottom-left-radius:3px; }
+.msg-lbl { font-family:'Orbitron',monospace; font-size:0.65rem; color:var(--blue); letter-spacing:2px; margin-bottom:6px; }
+.typing { display:flex; gap:5px; padding:14px 18px; align-self:flex-start; }
+.typing span { width:8px; height:8px; border-radius:50%; background:var(--blue); animation:bounce 1.2s ease-in-out infinite; }
+.typing span:nth-child(2){animation-delay:0.2s} .typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce { 0%,80%,100%{transform:scale(0.7);opacity:0.5} 40%{transform:scale(1.1);opacity:1} }
+.chat-input-row { padding:14px 16px; border-top:1px solid #00f5ff15; display:flex; gap:10px; }
+.chat-in { flex:1; background:rgba(0,15,50,0.8); border:1px solid #00f5ff33; border-radius:8px; padding:11px 16px; color:#ddeeff; font-family:'Exo 2',sans-serif; font-size:0.88rem; outline:none; transition:border-color 0.3s; }
+.chat-in:focus { border-color:var(--blue); box-shadow:0 0 10px #00f5ff33; }
+.chat-in::placeholder { color:#445566; }
+.send-btn { width:44px; height:44px; border-radius:8px; background:linear-gradient(135deg,#00f5ff,#bf00ff); border:none; cursor:pointer; font-size:1.1rem; transition:all 0.3s; }
+.send-btn:hover { transform:scale(1.08); box-shadow:0 0 18px #00f5ffaa; }
+.quick-btns { padding:0 16px 12px; display:flex; gap:7px; flex-wrap:wrap; }
+.qbtn { font-size:0.72rem; padding:6px 12px; border:1px solid #00f5ff33; border-radius:20px; background:rgba(0,245,255,0.07); color:#6688bb; cursor:pointer; transition:all 0.25s; }
+.qbtn:hover { border-color:var(--blue); color:var(--blue); background:rgba(0,245,255,0.14); }
+
+/* FACTS */
+.fact-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+.fact-card { background:var(--card); border:1px solid #00f5ff15; border-radius:12px; padding:20px; position:relative; overflow:hidden; transition:transform 0.3s; }
+.fact-card:hover { transform:translateY(-3px); }
+.fn { font-family:'Orbitron',monospace; font-size:1.8rem; font-weight:900; line-height:1; margin-bottom:8px; }
+.ft { font-size:0.75rem; letter-spacing:2px; color:#5577aa; text-transform:uppercase; margin-bottom:10px; }
+.fb { font-size:0.83rem; color:#8899bb; line-height:1.6; }
+.fglow { position:absolute; top:-20px; right:-20px; width:100px; height:100px; border-radius:50%; filter:blur(40px); opacity:0.3; }
+
+footer { position:relative; z-index:10; text-align:center; padding:20px; border-top:1px solid #00f5ff11; font-size:0.72rem; color:#334455; letter-spacing:2px; margin-top:30px; }
+</style>
+</head>
+<body>
+
+<div class="nebula" style="width:600px;height:600px;top:-100px;left:-100px;background:radial-gradient(#0044ff,transparent)"></div>
+<div class="nebula" style="width:500px;height:500px;top:200px;right:-80px;background:radial-gradient(#9900ff,transparent);animation-delay:-9s"></div>
+<div class="nebula" style="width:400px;height:400px;bottom:0;left:35%;background:radial-gradient(#ff0066,transparent);animation-delay:-5s"></div>
+<div id="starfield"></div>
+
+<header>
+  <h1>🌌 SPACE EXPLORER</h1>
+  <p>Stars &bull; Galaxies &bull; Universe</p>
+</header>
+
+<nav>
+  <button class="tab active" onclick="showPanel('stars',this)">⭐ Stars</button>
+  <button class="tab" onclick="showPanel('galaxies',this)">🌀 Galaxies</button>
+  <button class="tab" onclick="showPanel('map',this)">🗺️ Star Map</button>
+  <button class="tab" onclick="showPanel('ai',this)">🤖 AI Guide</button>
+  <button class="tab" onclick="showPanel('facts',this)">💡 Fun Facts</button>
+</nav>
+
+<main>
+
+<div class="panel active" id="stars">
+  <div class="sec-title">Famous Stars of Our Universe</div>
+  <div class="grid" id="stars-grid"></div>
+</div>
+
+<div class="panel" id="galaxies">
+  <div class="sec-title">Galaxies — Island Universes</div>
+  <div class="grid" id="galaxies-grid"></div>
+</div>
+
+<div class="panel" id="map">
+  <div class="sec-title">Interactive Star Map</div>
+  <div class="map-controls">
+    <button class="map-btn active" onclick="setView('all',this)">All Stars</button>
+    <button class="map-btn" onclick="setView('bright',this)">Brightest</button>
+    <button class="map-btn" onclick="resetZoom()">🔄 Reset</button>
+    <span class="map-info">🖱️ Hover star for info • Scroll to zoom</span>
+  </div>
+  <canvas id="mapcanvas"></canvas>
+  <div class="mtt" id="mtt"><div class="mtt-n" id="mtt-n"></div><div class="mtt-b" id="mtt-b"></div></div>
+</div>
+
+<div class="panel" id="ai">
+  <div class="sec-title">AI Space Guide — Ask Anything</div>
+  <div class="chat-box">
+    <div class="chat-head">
+      <div class="ai-dot">🤖</div>
+      <div><div class="ai-title">NOVA — Space AI</div><div class="ai-sub">Powered by Claude AI</div></div>
+      <div class="online"></div>
+    </div>
+    <div class="chat-msgs" id="chat-msgs">
+      <div class="msg ai"><div class="msg-lbl">NOVA</div>Namaste! 🌌 Main NOVA hoon — tumhara Space AI Guide! Mujhse koi bhi sawaal poochho — stars, galaxies, black holes, planets... kuch bhi! Main tumhe universe ki gehraiyaan samjhaunga! ✨</div>
+    </div>
+    <div class="quick-btns">
+      <button class="qbtn" onclick="quickQ('Sabse bada star kaun sa hai?')">Sabse bada star?</button>
+      <button class="qbtn" onclick="quickQ('Black hole kya hota hai?')">Black hole?</button>
+      <button class="qbtn" onclick="quickQ('Milky Way ke baare mein batao')">Milky Way?</button>
+      <button class="qbtn" onclick="quickQ('Kya aliens hote hain?')">Aliens?</button>
+      <button class="qbtn" onclick="quickQ('Big Bang theory kya hai?')">Big Bang?</button>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-in" id="chat-in" placeholder="Space ke baare mein kuch bhi poochho..." onkeydown="if(event.key==='Enter')sendMsg()">
+      <button class="send-btn" onclick="sendMsg()">🚀</button>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="facts">
+  <div class="sec-title">Mind-Blowing Space Facts</div>
+  <div class="fact-grid" id="facts-grid"></div>
+</div>
+
+</main>
+
+<footer>🌌 SPACE EXPLORER &nbsp;|&nbsp; EXPLORE THE INFINITE UNIVERSE</footer>
+
+<script>
+// Starfield
+const sf=document.getElementById('starfield');
+for(let i=0;i<200;i++){
+  const s=document.createElement('div'); s.className='star';
+  const sz=Math.random()*2.5+0.5;
+  const cols=['#ffffff','#aaddff','#ffddaa','#ffaaaa','#ddaaff'];
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;background:${cols[Math.floor(Math.random()*cols.length)]};--d:${Math.random()*4+2}s;animation-delay:${Math.random()*5}s;`;
+  sf.appendChild(s);
+}
+
+// Data
+const SD=[
+  {i:'☀️',n:'Sun',t:'G-Type Main Sequence',ac:'#ffd700',d:'Hamara apna tara! Iska diameter 1.39 million km hai. Isme hydrogen aur helium gas hai aur yeh nuclear fusion se energy produce karta hai.',s:[['Distance','0 LY'],['Diameter','1.39M km'],['Temperature','5,778 K'],['Age','4.6B yrs']]},
+  {i:'🔴',n:'Betelgeuse',t:'Red Supergiant',ac:'#ff4400',d:'Orion ka mashoor laal daitya! Agar yeh Sun ki jagah hota toh Mars tak pahunch jaata. Yeh kabhi bhi supernova ban sakta hai!',s:[['Distance','700 LY'],['Diameter','1,400× Sun'],['Temp','3,500 K'],['Type','Supergiant']]},
+  {i:'💙',n:'Rigel',t:'Blue Supergiant',ac:'#0088ff',d:'Orion ka sabse chamakdar tara. Sun se 279,000 guna zyada chamakta hai. Iska rang neela-safed hai jo bahut high temperature batata hai.',s:[['Distance','860 LY'],['Luminosity','279K× Sun'],['Temp','12,100 K'],['Mass','21× Sun']]},
+  {i:'⭐',n:'Sirius',t:'Binary Star System',ac:'#00f5ff',d:'Raat ke aasman ka sabse chamakdar tara! Asliyat mein yeh do taaron ki jodi hai — Sirius A aur Sirius B. Bahut kareeb hone ki wajah se itna chamakdar dikhta hai.',s:[['Distance','8.6 LY'],['Brightness','−1.46 mag'],['Temp','9,940 K'],['Type','Binary']]},
+  {i:'🌟',n:'Polaris',t:'North Star',ac:'#ffffff',d:'Dhruv Tara! Yeh hamesha uttar disha mein rehta hai isliye sailors aur musafir isse rasta dhundhne ke liye use karte the. Asliyat mein yeh 3 taaron ka system hai.',s:[['Distance','433 LY'],['Luminosity','2,500× Sun'],['Type','Supergiant'],['System','Triple']]},
+  {i:'🔵',n:'Vega',t:'A-Type Main Sequence',ac:'#8888ff',d:'Lyra constellation ka sabse chamakda tara. 14,000 saal baad yeh Polaris ki jagah Dhruv Tara ban jaayega kyunki Earth ki axis ghoomti rehti hai!',s:[['Distance','25 LY'],['Luminosity','40× Sun'],['Temp','9,600 K'],['Rotation','<13 hr']]},
+  {i:'🟡',n:'Alpha Centauri',t:'Triple Star System',ac:'#ffcc00',d:'Sun ka sabse kareeb tara! Isme 3 tare hain. Proxima Centauri — jo inka ek hissa hai — Earth ka sabse nearest stellar neighbor hai.',s:[['Distance','4.37 LY'],['Stars','3'],['Type','Triple'],['Nearest','Yes!']]},
+  {i:'🔶',n:'Antares',t:'Red Supergiant',ac:'#ff6600',d:'Scorpius constellation ka dil! Iska naam "Mars ka dushman" matlab hai. Diameter mein Sun se 700 guna bada hai.',s:[['Distance','550 LY'],['Diameter','700× Sun'],['Temp','3,400 K'],['Mass','12× Sun']]},
+];
+
+const GD=[
+  {i:'🌀',n:'Milky Way',t:'Barred Spiral Galaxy',ac:'#00f5ff',d:'Hamari apni galaxy! Isme 100-400 billion tare hain. Centre mein Sagittarius A* naam ka supermassive black hole hai.',s:[['Diameter','100,000 LY'],['Stars','400 Billion'],['Age','13.6B yrs'],['Type','Spiral']]},
+  {i:'🔵',n:'Andromeda',t:'Spiral Galaxy',ac:'#4488ff',d:'Hamari sabse kareeb neighbor galaxy! Isme 1 trillion tare hain. 4.5 billion saalon mein Milky Way se takraayegi!',s:[['Distance','2.537M LY'],['Stars','1 Trillion'],['Diameter','220K LY'],['Future','Merger!']]},
+  {i:'🌸',n:'Triangulum',t:'Spiral Galaxy',ac:'#ff66cc',d:'Local Group ki teesri sabse badi galaxy. Naked eye se dikhne wali sabse door galaxy! Isme active star formation ho rahi hai.',s:[['Distance','2.73M LY'],['Stars','40 Billion'],['Diameter','60K LY'],['Group','Local']]},
+  {i:'🟡',n:'Large Magellanic Cloud',t:'Irregular Galaxy',ac:'#ffcc00',d:'Milky Way ka satellite galaxy! Southern hemisphere se clearly dikh sakta hai. Isme Tarantula Nebula hai — universe ka sabse active star forming region.',s:[['Distance','160K LY'],['Stars','30 Billion'],['Type','Irregular'],['Visible','Naked Eye']]},
+  {i:'🔴',n:'Sombrero Galaxy',t:'Unbarred Spiral',ac:'#ff3344',d:'Mexican sombrero topi jaisi dikhti hai! Centre mein ek supermassive black hole hai jo Sun se 1 billion guna zyada bhaari hai.',s:[['Distance','31M LY'],['Diameter','50K LY'],['BH Mass','1B× Sun'],['Type','Spiral']]},
+  {i:'💫',n:'Whirlpool Galaxy',t:'Grand Design Spiral',ac:'#aa44ff',d:'Sabse pehle spiral structure wali galaxy identify ki gayi! Iska companion galaxy NGC 5195 se interaction iske arms ko define karta hai.',s:[['Distance','31M LY'],['Diameter','60K LY'],['Stars','160B'],['Type','Spiral']]},
+  {i:'🌊',n:'Centaurus A',t:'Peculiar Galaxy',ac:'#00ffaa',d:'Ek giant elliptical galaxy jisme massive dust lane hai. Bahut powerful radio waves emit karta hai. Radio telescopes se easily detect hota hai.',s:[['Distance','13M LY'],['Diameter','60K LY'],['BH','55M× Sun'],['Radio','Intense']]},
+  {i:'✨',n:'IC 1101',t:'Super Giant Elliptical',ac:'#ffaa00',d:'Known universe ki sabse badi galaxy! Milky Way se 50 guna badi aur 2,000 times zyada tare hain. Abell 2029 cluster ke centre mein hai.',s:[['Distance','1.07B LY'],['Diameter','6M LY'],['Stars','100T'],['Rank','#1 Biggest']]},
+];
+
+const FD=[
+  {n:'8 min',c:'#ffd700',g:'#ffd70055',t:'Sunlight Travel Time',b:'Sun se roshni Earth tak 8 minute 20 seconds mein pahunchti hai. Agar Sun off ho jaaye toh hume 8 minute baad pata chalega!'},
+  {n:'2T+',c:'#00f5ff',g:'#00f5ff55',t:'Total Galaxies',b:'Observable universe mein 2 trillion se zyada galaxies hain. Har galaxy mein billions of stars! Total stars ki ginti Earth ki tamam beaches ki ret se zyada hai!'},
+  {n:'0 dB',c:'#bf00ff',g:'#bf00ff55',t:'Sound in Space',b:'Space mein bilkul silence hai! Sound ke liye medium chahiye — space mein vacuum hai. Movies mein jo blasts dikhate hain woh galat hai!'},
+  {n:'1B km/h',c:'#ff0090',g:'#ff009055',t:'Speed of Light',b:'Roshni 1 second mein 3 lakh kilometer chalti hai. Yeh universe mein sabse fast speed hai. Koi bhi cheez is speed tak nahi pahunch sakti.'},
+  {n:'−270°C',c:'#00ffaa',g:'#00ffaa55',t:'Space Temperature',b:'Space bahut thanda hai — almost −270°C. Direct sunlight mein 120°C aur shadow mein −160°C ho sakta hai satellites ke liye.'},
+  {n:'13.8B',c:'#ff6600',g:'#ff660055',t:'Age of Universe (years)',b:'Universe 13.8 billion saal purana hai. Big Bang se shuru hua. Hamare Solar System ki age 4.6 billion saal hai — universe ki age ka ek-tehai!'},
+  {n:'400B',c:'#44aaff',g:'#44aaff55',t:'Stars in Milky Way',b:'Milky Way mein 400 billion tare hain. Raat ko aankh se hum sirf 5,000 tare dekh sakte hain. Baaki atmospheric pollution ki wajah se nahi dikhte.'},
+  {n:'∞ ?',c:'#ffdd00',g:'#ffdd0055',t:'Size of Universe',b:'Observable universe 93 billion light years wide hai. Lekin poora universe is se kaafi bada — shayad infinite bhi! Scientists abhi bhi research kar rahe hain.'},
+];
+
+function mkCard(d){
+  return `<div class="card" style="--ac:${d.ac}">
+    <span class="ci">${d.i}</span>
+    <div class="cn">${d.n}</div>
+    <div class="ct">${d.t}</div>
+    <div class="cd">${d.d}</div>
+    <div class="stats">${d.s.map(x=>`<div class="stat"><div class="sl">${x[0]}</div><div class="sv">${x[1]}</div></div>`).join('')}</div>
+  </div>`;
+}
+
+document.getElementById('stars-grid').innerHTML=SD.map(mkCard).join('');
+document.getElementById('galaxies-grid').innerHTML=GD.map(mkCard).join('');
+document.getElementById('facts-grid').innerHTML=FD.map(f=>`
+  <div class="fact-card">
+    <div class="fglow" style="background:${f.g}"></div>
+    <div class="fn" style="color:${f.c};text-shadow:0 0 20px ${f.c}88">${f.n}</div>
+    <div class="ft">${f.t}</div>
+    <div class="fb">${f.b}</div>
+  </div>`).join('');
+
+// Panel switch
+function showPanel(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='map') setTimeout(initMap,80);
+}
+
+// Star Map
+const MS=[
+  {x:0.5,y:0.5,n:'Sun',d:'0 LY',t:'G-Type',m:3.5,c:'#ffd700',con:''},
+  {x:0.15,y:0.3,n:'Sirius',d:'8.6 LY',t:'Binary',m:3,c:'#aaddff',con:'Canis Major'},
+  {x:0.25,y:0.2,n:'Rigel',d:'860 LY',t:'Blue Supergiant',m:2.8,c:'#6699ff',con:'Orion'},
+  {x:0.3,y:0.25,n:'Betelgeuse',d:'700 LY',t:'Red Supergiant',m:2.8,c:'#ff6633',con:'Orion'},
+  {x:0.28,y:0.3,n:'Mintaka',d:'900 LY',t:'Multiple',m:2,c:'#ffffff',con:'Orion'},
+  {x:0.285,y:0.275,n:'Alnilam',d:'1340 LY',t:'Supergiant',m:2,c:'#ffffff',con:'Orion'},
+  {x:0.29,y:0.255,n:'Alnitak',d:'800 LY',t:'Triple',m:2,c:'#ffffff',con:'Orion'},
+  {x:0.75,y:0.35,n:'Vega',d:'25 LY',t:'A-Type',m:2.8,c:'#ccccff',con:'Lyra'},
+  {x:0.8,y:0.42,n:'Altair',d:'17 LY',t:'A-Type',m:2.5,c:'#ddddff',con:'Aquila'},
+  {x:0.65,y:0.28,n:'Deneb',d:'2600 LY',t:'Supergiant',m:3,c:'#ffffff',con:'Cygnus'},
+  {x:0.85,y:0.15,n:'Polaris',d:'433 LY',t:'Triple System',m:2.5,c:'#ffffff',con:'Ursa Minor'},
+  {x:0.1,y:0.5,n:'Castor',d:'52 LY',t:'Sextuple',m:2,c:'#ffffff',con:'Gemini'},
+  {x:0.12,y:0.53,n:'Pollux',d:'34 LY',t:'K-Giant',m:2.5,c:'#ffaa66',con:'Gemini'},
+  {x:0.55,y:0.45,n:'Spica',d:'250 LY',t:'Binary',m:2.8,c:'#aabbff',con:'Virgo'},
+  {x:0.4,y:0.4,n:'Arcturus',d:'37 LY',t:'K-Giant',m:3,c:'#ffaa44',con:'Boötes'},
+  {x:0.6,y:0.62,n:'Antares',d:'550 LY',t:'Red Supergiant',m:2.8,c:'#ff4400',con:'Scorpius'},
+  {x:0.2,y:0.65,n:'Canopus',d:'310 LY',t:'Supergiant',m:3,c:'#ffffcc',con:'Carina'},
+  {x:0.4,y:0.72,n:'Alpha Centauri',d:'4.37 LY',t:'Triple',m:3,c:'#ffff88',con:'Centaurus'},
+  {x:0.85,y:0.65,n:'Fomalhaut',d:'25 LY',t:'A-Type',m:2.5,c:'#ffffff',con:'Piscis'},
+  {x:0.35,y:0.55,n:'Regulus',d:'79 LY',t:'Quadruple',m:2.5,c:'#bbddff',con:'Leo'},
+];
+
+let vf='all', zoom=1, px=0, py=0;
+
+function initMap(){
+  const c=document.getElementById('mapcanvas');
+  if(!c) return;
+  c.width=c.offsetWidth; c.height=c.offsetHeight;
+  drawMap();
+  c.onmousemove=e=>{
+    const r=c.getBoundingClientRect();
+    const mx=(e.clientX-r.left)/c.width, my=(e.clientY-r.top)/c.height;
+    const tt=document.getElementById('mtt');
+    let found=false;
+    MS.forEach(s=>{
+      if(Math.abs(s.x-mx)<0.04&&Math.abs(s.y-my)<0.06){
+        tt.style.display='block';
+        tt.style.left=(e.clientX+12)+'px';
+        tt.style.top=(e.clientY-10)+'px';
+        document.getElementById('mtt-n').textContent='⭐ '+s.n;
+        document.getElementById('mtt-b').innerHTML=`Type: ${s.t}<br>Distance: ${s.d}<br>Constellation: ${s.con||'—'}`;
+        found=true;
+      }
+    });
+    if(!found) tt.style.display='none';
+  };
+  c.onmouseleave=()=>document.getElementById('mtt').style.display='none';
+  c.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.4,Math.min(3,zoom-e.deltaY*0.001));drawMap();},{passive:false});
+}
+
+function drawMap(){
+  const c=document.getElementById('mapcanvas');
+  if(!c) return;
+  const ctx=c.getContext('2d');
+  const W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(0,245,255,0.04)'; ctx.lineWidth=1;
+  for(let i=0;i<10;i++){
+    ctx.beginPath();ctx.moveTo(W*i/10,0);ctx.lineTo(W*i/10,H);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,H*i/10);ctx.lineTo(W,H*i/10);ctx.stroke();
+  }
+
+  // Milky Way band
+  const mw=ctx.createLinearGradient(0,H*0.35,W,H*0.65);
+  mw.addColorStop(0,'transparent'); mw.addColorStop(0.4,'rgba(150,120,255,0.07)'); mw.addColorStop(0.5,'rgba(180,160,255,0.1)'); mw.addColorStop(0.6,'rgba(150,120,255,0.07)'); mw.addColorStop(1,'transparent');
+  ctx.fillStyle=mw; ctx.fillRect(0,0,W,H);
+
+  // Constellation lines
+  const lines=[[0.28,0.3,0.285,0.275],[0.285,0.275,0.29,0.255],[0.25,0.2,0.3,0.25],[0.3,0.25,0.28,0.3]];
+  ctx.strokeStyle='rgba(100,150,255,0.15)'; ctx.lineWidth=0.8; ctx.setLineDash([3,5]);
+  lines.forEach(l=>{
+    ctx.beginPath();
+    ctx.moveTo((l[0]*W+px)*zoom,(l[1]*H+py)*zoom);
+    ctx.lineTo((l[2]*W+px)*zoom,(l[3]*H+py)*zoom);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  const filtered=vf==='bright'?MS.filter(s=>s.m>=2.8):MS;
+  filtered.forEach(s=>{
+    const sx=(s.x*W+px)*zoom, sy=(s.y*H+py)*zoom;
+    if(sx<-20||sx>W+20||sy<-20||sy>H+20) return;
+    const r=(s.m*zoom)*0.85+1;
+    const g=ctx.createRadialGradient(sx,sy,0,sx,sy,r*4);
+    g.addColorStop(0,s.c+'cc'); g.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(sx,sy,r*4,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.fillStyle=s.c; ctx.fill();
+    if(zoom>0.7){
+      ctx.fillStyle='rgba(160,195,255,0.75)';
+      ctx.font=`${Math.max(9,10*zoom)}px Exo 2`;
+      ctx.fillText(s.n,sx+r+4,sy+4);
+    }
+  });
+
+  // Labels
+  ctx.fillStyle='rgba(0,245,255,0.5)'; ctx.font='10px Orbitron';
+  ctx.fillText('N',W-25,20); ctx.fillText('S',W-25,H-8);
+  ctx.fillText('W',8,H/2); ctx.fillText('E',W-18,H/2);
+}
+
+function setView(v,btn){
+  vf=v;
+  document.querySelectorAll('.map-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawMap();
+}
+function resetZoom(){zoom=1;px=0;py=0;drawMap();}
+
+// AI Chat
+async function sendMsg(){
+  const inp=document.getElementById('chat-in');
+  const txt=inp.value.trim();
+  if(!txt) return;
+  inp.value='';
+  addMsg(txt,'user');
+  showTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'Tum NOVA ho — ek friendly aur enthusiastic Space AI Guide. Tum Hinglish mein (Hindi + English mix) jawab dete ho. Space ke baare mein simple, interesting aur accurate information dete ho. Emojis use karo. Jawab 3-5 sentences mein dete ho — concise aur engaging rakhte ho.',
+        messages:[{role:'user',content:txt}]
+      })
+    });
+    const data=await res.json();
+    removeTyping();
+    const reply=data.content?.map(c=>c.text||'').join('');
+    addMsg(reply||'Oops! Dobara try karo 🛸','ai');
+  }catch(e){
+    removeTyping();
+    addMsg('Signal weak hai galaxy mein! 📡 Dobara try karo.','ai');
+  }
+}
+
+function quickQ(q){document.getElementById('chat-in').value=q;sendMsg();}
+
+function addMsg(txt,type){
+  const c=document.getElementById('chat-msgs');
+  const m=document.createElement('div'); m.className='msg '+type;
+  m.innerHTML=type==='ai'?`<div class="msg-lbl">NOVA</div>${txt}`:txt;
+  c.appendChild(m); c.scrollTop=c.scrollHeight;
+}
+function showTyping(){
+  const c=document.getElementById('chat-msgs');
+  const t=document.createElement('div'); t.className='typing'; t.id='typing';
+  t.innerHTML='<span></span><span></span><span></span>';
+  c.appendChild(t); c.scrollTop=c.scrollHeight;
+}
+function removeTyping(){ const t=document.getElementById('typing'); if(t)t.remove(); }
+
+window.addEventListener('resize',()=>{ if(document.getElementById('map').classList.contains('active')) drawMap(); });
+</script>
+</body>
+</html>
